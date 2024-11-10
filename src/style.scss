@@ -7,7 +7,7 @@ $main-aqua: #54BBEB;
   line-height: 1.5;
   font-weight: 400;
 
-  background-color: #F1F4F9;
+  //background-color: #F1F4F9;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -16,6 +16,7 @@ $main-aqua: #54BBEB;
 * {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 a {
@@ -34,19 +35,6 @@ button {
   outline: none;
   border: none;
 }
-
-// body {
-//   margin: 0;
-//   display: flex;
-//   min-width: 320px;
-//   min-height: 100vh;
-// }
-
-// #app {
-//   max-width: 1280px;
-//   margin: 0 auto;
-//   text-align: center;
-// }
 
 .container {
   width: 1000px;

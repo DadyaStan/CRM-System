@@ -1,25 +1,29 @@
 <script lang="ts" setup>
 import { reactive, computed } from 'vue';
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue';
+import { useAuthStore } from '../../store/authStore';
+
 interface FormState {
-    email: string;
+    login: string;
     password: string;
-    remember: boolean;
 }
 const formState = reactive<FormState>({
-    email: '',
+    login: '',
     password: '',
-    remember: true,
 });
-const onFinish = (values: any) => {
-    console.log('Success:', values);
+console.log(localStorage.getItem('userdata'))
+const authStore = useAuthStore();
+
+const onFinish = async (values: any) => {
+    await authStore.signin(values);
+    await authStore.fetchProfile();
 };
 
 const onFinishFailed = (errorInfo: any) => {
     console.log('Failed:', errorInfo);
 };
 const disabled = computed(() => {
-    return !(formState.email && formState.password);
+    return !(formState.login && formState.password);
 });
 </script>
 
@@ -28,9 +32,9 @@ const disabled = computed(() => {
         <div class="auth-page">
             <a-form :model="formState" name="normal_login" class="login-form" @finish="onFinish"
                 @finishFailed="onFinishFailed">
-                <a-form-item label="Email" name="email"
-                    :rules="[{ required: true, message: 'Please input your E-mail!' }]">
-                    <a-input v-model:value="formState.email">
+                <a-form-item label="Login" name="login"
+                    :rules="[{ required: true, message: 'Please input your Login!' }]">
+                    <a-input v-model:value="formState.login">
                         <template #prefix>
                             <UserOutlined class="site-form-item-icon" />
                         </template>
@@ -47,18 +51,11 @@ const disabled = computed(() => {
                 </a-form-item>
 
                 <a-form-item>
-                    <a-form-item name="remember" no-style>
-                        <a-checkbox v-model:checked="formState.remember">Remember me</a-checkbox>
-                    </a-form-item>
-                    <a class="login-form-forgot" href="">Forgot password</a>
-                </a-form-item>
-
-                <a-form-item>
                     <a-button :disabled="disabled" type="primary" html-type="submit" class="login-form-button">
                         Log in
                     </a-button>
                     Or
-                    <a href="">register now!</a>
+                    <RouterLink to="/todo-list/auth/sign-up">Register now!</RouterLink>
                 </a-form-item>
             </a-form>
         </div>
@@ -71,14 +68,6 @@ const disabled = computed(() => {
     display: flex;
     justify-content: center;
     align-items: center;
-
-    // &__background {
-    //     width: 1110px;
-    //     height: 100vh;
-    //     background-image: url('../assets/image.png');
-    //     background-size: contain;
-    //     background-repeat: no-repeat;
-    // }
 }
 
 #components-form-demo-normal-login .login-form {

@@ -25,14 +25,14 @@ export const fetchFilteredTodo = async (newFilter: string): Promise<MetaResponse
         const result: MetaResponse<Todo, TodoInfo> = await response.json();
 
         if (!response.ok) {
-            throw new Error('Ошибка при загрузки задач ' + Error);
+            throw new Error('Ошибка при загрузки профиля ' + Error);
         }
 
         return result;
     } catch (error) {
         console.error(error);
 
-        throw new Error('Ошибка при загрузки задач ' + Error);
+        throw new Error('Ошибка при загрузки профиля ' + Error);
     }
 }
 

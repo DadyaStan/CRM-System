@@ -2,174 +2,103 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import router from '../router';
 import { UserRegistration, AuthData, Profile, Token } from "../types/auth";
-
-const BASE_URL = 'https://easydev.club/api/v1';
+import { api } from '../api/api';
+import { jwtDecode } from 'jwt-decode';
 
 export const useAuthStore = defineStore('auth', () => {
-    const userInfo = ref({
-        accessToken: '',
-        refreshToken: '',
-    });
-    const userError = ref('');
-    const isLoading = ref(false);
+    const userError = ref<string>('');
+    const isLoading = ref<boolean>(false);
 
     const signup = async (registrationData: UserRegistration) => {
         try {
-            const response: Response = await fetch(`${BASE_URL}/auth/signup`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(registrationData)
-            });
+            isLoading.value = true;
+            const response = await api.post<Profile>('/auth/signup', registrationData);
 
-            if (response.ok) {
-                const result: Profile = await response.json();
-                console.log(result);
-                return result;
-            } else {
-                // Обработка различных кодов статуса
-                let errorMessage = 'Произошла ошибка.';
-
-                switch (response.status) {
-                    case 400:
-                        errorMessage = 'Некорректные данные. Пожалуйста, проверьте введённые данные.';
-                        return response.status;
-                    case 409:
-                        errorMessage = 'Пользователь с такими данными уже существует.';
-                        return response.status;
-                    case 500:
-                        errorMessage = 'Серверная ошибка. Пожалуйста, попробуйте позже.';
-                        return response.status;
-                    default:
-                        errorMessage = `Неизвестная ошибка: ${response.statusText}`;
-                }
-
-                throw new Error(errorMessage);
+            console.log(response)
+            if (response.status === 201) {
+                return response;
+            }
+        } catch (error: any) {
+            if (error.status === 400) {
+                alert('400 Bad Request: Ошибка десериализации запроса или неверный ввод.')
+            } else if (error.status === 409) {
+                alert('409 Conflict: Пользователь уже существует.')
+            } else if (error.status === 500) {
+                alert('500 Internal Server Error: Внутренняя ошибка сервера.')
             }
 
-        } catch (error) {
-            console.error(error);
-            return error;
-
-            throw new Error('Ошибка при регистрации: ' + Error);
+            throw new Error;
+        } finally {
+            isLoading.value = false;
         }
     }
-    const signin = async (loginData: AuthData) => {
+    const signin = async (loginData: AuthData): Promise<void> => {
         try {
-            const response: Response = await fetch(`${BASE_URL}/auth/signin`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(loginData)
-            });
+            isLoading.value = true;
+            const response = await api.post<Token>('/auth/signin', loginData);
 
-            if (response.ok) {
-                const result: Token = await response.json();
+            if (response.status === 200) {
+                localStorage.setItem('accessToken', response.data.accessToken);
+                localStorage.setItem('refreshToken', response.data.refreshToken);
 
-                userInfo.value.accessToken = result.accessToken;
-                userInfo.value.refreshToken = result.refreshToken;
-
-                localStorage.setItem('accessToken', result.accessToken);
-                localStorage.setItem('refreshToken', result.refreshToken);
-
-                await fetchProfile();
-                await router.push('/todo-list/todo');
-
-                console.log(userInfo.value)
-            } else {
-                let errorMessage = 'Произошла ошибка.';
-
-                switch (response.status) {
-                    case 400:
-                        errorMessage = '400 Bad Request: Ошибка десериализации запроса или неверный ввод.';
-                        return response.status;
-                    case 401:
-                        errorMessage = '401 Unauthorized: Неверные учетные данные.';
-                        return response.status;
-                    case 500:
-                        errorMessage = '500 Internal Server Error: Внутренняя ошибка сервера.';
-                        return response.status;
-                    default:
-                        errorMessage = `Неизвестная ошибка: ${response.statusText}`;
-                }
-                throw new Error(errorMessage);
+                const expiresIn: any = decodeToken(response.data.accessToken)
+                localStorage.setItem('expiresIn', new Date(Date.now() + expiresIn * 1000).toString());
+                
+                await router.push('/todo-list/app/todo');
+            }
+        } catch (error: any) {
+            if (error.status === 400) {
+                alert('Bad Request: Ошибка десериализации запроса или неверный ввод.')
+            } else if (error.status === 401) {
+                alert('401 Unauthorized: Неверные учетные данные.')
+            } else if (error.status === 500) {
+                alert('500 Internal Server Error: Внутренняя ошибка сервера.')
             }
 
-        } catch (error) {
-            console.error(error);
-
-            throw new Error('Ошибка при регистрации: ' + Error);
+            throw new Error;
+        } finally {
+            isLoading.value = false;
         }
     }
-    const fetchProfile = async () => {
+    const logout = async (): Promise<void> => {
         try {
-            const accessToken = localStorage.getItem('accessToken');
-
-            const response: Response = await fetch(`${BASE_URL}/user/profile`, {
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
-
-            if (response.ok) {
-                const profile = await response.json();
-
-                await localStorage.setItem('userData', JSON.stringify(profile));
-
-                console.log(profile);
-            } else {
-                let errorMessage = 'Произошла ошибка.';
-
-                switch (response.status) {
-                    case 400:
-                        errorMessage = '400 Bad Request: Ошибка десериализации запроса или неверный ввод.';
-                        return response.status;
-                    case 401:
-                        errorMessage = '401 Unauthorized: Неверные учетные данные.';
-                        return response.status;
-                    case 500:
-                        errorMessage = '500 Internal Server Error: Внутренняя ошибка сервера.';
-                        return response.status;
-                    default:
-                        errorMessage = `Неизвестная ошибка: ${response.statusText}`;
-                }
-                throw new Error(errorMessage);
-            }
-        } catch {
-            console.error(new Error);
-
-            throw new Error('EroRCHIK');
-        }
-    }
-    const logout = async () => {
-        try {
-            const accessToken = localStorage.getItem('accessToken');
-            console.log('logout 2')
-            const response: any = await fetch(`${BASE_URL}/auth/logout`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
-
-            console.log('Logout');
+            await api.post<void>('/user/logout');
 
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             localStorage.removeItem('userData');
 
-            router.push('/todo-list/login');
+            router.push('/todo-list/auth/login');
 
-            if (!response.ok) {
-                throw new Error;
-            }
+            console.log('Logout');
         } catch (error) {
+            console.error('Ошибка при логауте: ' + error);
+            throw new Error;
+        }
+    }
+    const fetchProfile = async (): Promise<Profile> => {
+        try {
+            const response = await api.get<Profile>('/user/profile');
+            
+            return response.data;
+        } catch (error) {
+            console.error(`Ошибка при загрузке профиля: ${error}`);
+
             throw new Error;
         }
     }
 
-    return { userInfo, signup, signin, fetchProfile, logout, userError, isLoading }
+    const decodeToken = (accessToken: string) => {
+        try {
+            const decoded = jwtDecode(accessToken);
+
+            return decoded.exp;
+        } catch (error) {
+            console.error('Ошибка при декодировании токена: ' + error);
+
+            throw error;
+        }
+    }
+
+    return { signup, signin, fetchProfile, logout, userError, isLoading }
 });

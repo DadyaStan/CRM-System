@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { onBeforeMount, ref } from 'vue';
-import { useAuthStore } from '../store/authStore';
+import { ref } from 'vue';
 import {
     UserOutlined,
     UnorderedListOutlined,
@@ -8,23 +7,10 @@ import {
     MenuFoldOutlined,
 } from '@ant-design/icons-vue';
 
-const authStore = useAuthStore(); 
-
-const selectedKeys = ref<string[]>(['2']);
+const selectedKeys = ref<string[]>(['todo']);
 const collapsed = ref<boolean>(false);
 
-const userData = ref<any>({});
 
-onBeforeMount(() => {
-    //userData.value = localStorage.getItem('userData') 
-    const asd: any = localStorage.getItem('userData');
-    userData.value = JSON.parse(asd);
-    console.log(userData.value)
-});
-
-const logout = async () => {
-    await authStore.logout();
-}
 </script>
 
 <template>
@@ -33,15 +19,15 @@ const logout = async () => {
             <a-layout-sider v-model:collapsed="collapsed" :trigger="null" collapsible>
                 <div class="logo" />
                 <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
-                    <router-link to="/todo-list/todo">
-                    <a-menu-item key="1">
-                        <unordered-list-outlined />
-                        <span>Todo</span>
-                    </a-menu-item>
+                    <router-link to="/todo-list/app/todo">
+                        <a-menu-item key="todo">
+                            <unordered-list-outlined />
+                            <span>Todo</span>
+                        </a-menu-item>
                     </router-link>
 
-                    <router-link to="/todo-list/profile">
-                        <a-menu-item key="2">
+                    <router-link to="/todo-list/app/profile">
+                        <a-menu-item key="profile">
                             <user-outlined />
                             <span>Profile</span>
                         </a-menu-item>
@@ -49,21 +35,12 @@ const logout = async () => {
                 </a-menu>
             </a-layout-sider>
             <a-layout>
-                <a-layout-header style="background: #fff; padding: 0">
+                <a-layout-header style="background: #fff; padding: 0 15px">
                     <menu-unfold-outlined v-if="collapsed" class="trigger" @click="() => (collapsed = !collapsed)" />
                     <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />
                 </a-layout-header>
-                <a-layout-content
-                    :style="{ margin: '24px 16px', padding: '24px', background: '#fff', minHeight: '100vh' }">
-                    <div>
-                        Твоё имя - {{ userData.username }}
-                    </div>
-                    <div>
-                        Твоя почта - {{ userData.email }}
-                    </div>
-                    <button @click="logout" style="padding: 10px; cursor: pointer;">
-                        Logout
-                    </button>
+                <a-layout-content :style="{ margin: '24px 16px', padding: '24px', minHeight: '100vh', backgroundColor: '#fff', }">
+                    <router-view></router-view>
                 </a-layout-content>
             </a-layout>
         </a-layout>
@@ -71,13 +48,6 @@ const logout = async () => {
 </template>
 
 <style lang="scss">
-
-header {
-    & span {
-        padding: 15px;
-    }
-}
-
 #components-layout-demo-custom-trigger .trigger {
     font-size: 18px;
     line-height: 64px;

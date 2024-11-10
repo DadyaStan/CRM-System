@@ -95,16 +95,16 @@ const handleSubmit = async () => {
     validateEmail();
     validatePhone();
 
-    if (!usernameError.value && !loginError.value && !passwordError.value && !confirmPasswordError.value && !emailError.value && !phoneError.value) {        
-        const result = await authStore.signup(formState.user);
+    if (!usernameError.value && !loginError.value && !passwordError.value && !confirmPasswordError.value && !emailError.value && !phoneError.value) {
+        const result: any = await authStore.signup(formState.user);
 
-        if (result === 400) {
+        if (result.status === 400) {
             alert('Ошибка десериализации запроса или неверный ввод.');
-        } else if (result === 409) {
+        } else if (result.status === 409) {
             alert('Пользователь уже существует.');
-        } else if (result === 500) {
+        } else if (result.status === 500) {
             alert('Внутренняя ошибка сервера.');
-        } else {
+        } else if (result.status === 201) {
             isRegisterSuccess.value = true;
         }
     }
@@ -115,7 +115,7 @@ const handleSubmit = async () => {
     <div class="auth-page">
         <div v-if="isRegisterSuccess" class="auth-page__success-box">
             <h3>Регистрация прошла успешно!</h3>
-            <router-link to="/todo-list/login">
+            <router-link to="/todo-list/auth/login">
                 Вернутся на страницу входа
             </router-link>
         </div>
@@ -123,7 +123,8 @@ const handleSubmit = async () => {
             <!-- Имя пользователя -->
             <a-form-item label="Имя пользователя" :help="usernameError"
                 :validateStatus="usernameError ? 'error' : 'success'">
-                <a-input v-model:value="formState.user.username" @blur="validateUsername" placeholder="Введите имя пользователя" />
+                <a-input v-model:value="formState.user.username" @blur="validateUsername"
+                    placeholder="Введите имя пользователя" />
             </a-form-item>
 
             <!-- Логин -->
@@ -133,7 +134,8 @@ const handleSubmit = async () => {
 
             <!-- Пароль -->
             <a-form-item label="Пароль" :help="passwordError" :validateStatus="passwordError ? 'error' : 'success'">
-                <a-input-password v-model:value="formState.user.password" @blur="validatePassword" placeholder="Введите пароль" />
+                <a-input-password v-model:value="formState.user.password" @blur="validatePassword"
+                    placeholder="Введите пароль" />
             </a-form-item>
 
             <!-- Повторите пароль -->
@@ -145,7 +147,8 @@ const handleSubmit = async () => {
 
             <!-- Почтовый адрес -->
             <a-form-item label="Почтовый адрес" :help="emailError" :validateStatus="emailError ? 'error' : 'success'">
-                <a-input v-model:value="formState.user.email" @blur="validateEmail" placeholder="Введите почтовый адрес" />
+                <a-input v-model:value="formState.user.email" @blur="validateEmail"
+                    placeholder="Введите почтовый адрес" />
             </a-form-item>
 
             <!-- Телефон -->
@@ -157,6 +160,13 @@ const handleSubmit = async () => {
             <a-form-item>
                 <a-button type="primary" html-type="submit">Зарегистрироваться</a-button>
             </a-form-item>
+
+            <!-- Кнопка возврата к логину -->
+            <router-link to="/todo-list/auth/login">
+                <a-form-item>
+                    <a-button type="primary"><- Back to Log in</a-button>
+                </a-form-item>
+            </router-link>
         </a-form>
     </div>
 </template>
