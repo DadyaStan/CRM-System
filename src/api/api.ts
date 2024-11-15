@@ -42,20 +42,13 @@ const checkExpiresIn = (): void => {
   const expirationTime = checkTokenExpiration();
   console.log(`Time to refresh: ${expirationTime}`);
 };
-const systemLogout = async (): Promise<void> => {
-  try {
-    await api.post<void>("/user/logout");
+const systemLogout = (): void => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
 
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+  router.push("/CRM-System/auth/login");
 
-    router.push("/CRM-System/auth/login");
-
-    console.log("System logout");
-  } catch (error) {
-    console.error("Ошибка при системном логауте: " + error);
-    throw new Error();
-  }
+  console.log("System logout");
 };
 
 api.interceptors.request.use(
