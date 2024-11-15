@@ -1,97 +1,104 @@
-import axios, { InternalAxiosRequestConfig } from "axios";
+import axios from "axios";
+import { Token } from "@/types/auth";
+
+import router from "@/router";
 
 export const api = axios.create({
-    baseURL: 'https://easydev.club/api/v1',
+  baseURL: "https://easydev.club/api/v1",
 });
 
-async function refreshAccessToken() {
-    const refreshToken = localStorage.getItem('refreshToken');
+const refreshToken = async (): Promise<void> => {
+  try {
+    const response = await axios.post<Token>(
+      "https://easydev.club/api/v1/auth/refresh",
+      {
+        refreshToken: localStorage.getItem("refreshToken"),
+      },
+    );
 
-    if (!refreshToken) throw new Error('Refresh token не найден');
+    localStorage.setItem("accessToken", response.data.accessToken);
+    localStorage.setItem("refreshToken", response.data.refreshToken);
+  } catch (error) {
+    console.log(`Ошибка при обновлении токена: ${error}`);
 
-    const response = await axios.post('https://easydev.club/api/v1/auth/refresh', {
-        refreshToken,
-    });
+    throw error;
+  }
+};
+const decodeToken = (token: string): any => {
+  const payload = token.split(".")[1];
+  return JSON.parse(atob(payload));
+};
+const checkTokenExpiration = (): number | string => {
+  const accessToken = localStorage.getItem("accessToken");
 
-    const { accessToken, expiresIn } = response.data;
+  if (!accessToken) return 0;
 
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('expiresIn', new Date(Date.now() + expiresIn * 1000).toString());
+  const decodedToken = decodeToken(accessToken);
+  const currentTime = Math.floor(Date.now() / 1000);
 
-    return accessToken;
-}
+  return decodedToken.exp - currentTime;
+};
+const checkExpiresIn = (): void => {
+  const expirationTime = checkTokenExpiration();
+  console.log(`Time to refresh: ${expirationTime}`);
+};
+const systemLogout = async (): Promise<void> => {
+  try {
+    await api.post<void>("/user/logout");
+
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+
+    router.push("/CRM-System/auth/login");
+
+    console.log("System logout");
+  } catch (error) {
+    console.error("Ошибка при системном логауте: " + error);
+    throw new Error();
+  }
+};
 
 api.interceptors.request.use(
-    async (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('accessToken');
-        const expiresIn = localStorage.getItem('expiresIn');
+  (config) => {
+    const token = localStorage.getItem("accessToken");
+    checkExpiresIn();
 
-
-        if (token && expiresIn) {
-            const expirationTime = new Date(expiresIn).getTime();
-            const currentTime = Date.now();
-            const timeLeft = Math.max(0, expirationTime - currentTime);
-
-            console.log('Время до истечения access токена: ', timeLeft / 1000, ' секунд');
-
-            // Проверка истечения токена
-            if (currentTime >= expirationTime) {
-                try {
-                    const newToken = await refreshAccessToken();
-                    config.headers.Authorization = `Bearer ${newToken}`;
-                } catch (error) {
-                    console.error('Не удалось обновить токен:', error);
-                    // Обработка случая, когда обновить токен невозможно (например, редирект на страницу входа)
-                    return Promise.reject(error);
-                }
-            } else {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-        }
-
-        return config;
-    },
-    (error) => {
-        console.error('Request error:', error);
-        return Promise.reject(error);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
 );
 
-// api.interceptors.response.use(
-//     response => response,
-//     async (error) => {
-//         const originalRequest = error.config;
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
 
-//         // Проверка, является ли ошибка 401 СДЕЛАТЬ ПРОВЕРКУ НА ТО НЕ ПРОСРОЧИЛСЯ ЛИ ТОКЕН А НЕ 401
-//         if (error.response && error.response.status === 401) {
-//             const refreshExpiresIn = localStorage.getItem('refreshExpiresIn');
+    if (
+      error.response.status === 401 &&
+      error.config &&
+      !error.config._isRetry
+    ) {
+      originalRequest._isRetry = true;
 
-//             // Проверяем, истек ли refresh token
-//             if (refreshExpiresIn) {
-//                 const refreshExpirationTime = new Date(refreshExpiresIn).getTime();
-//                 const currentTime = Date.now();
+      try {
+        await refreshToken();
 
-//                 if (currentTime >= refreshExpirationTime) {
-//                     const authStore = useAuthStore();
-//                     authStore.logout();
-//                     return Promise.reject(new Error('Оба токена истекли. Пользователь вышел из системы.'));
-//                 }
-//             }
+        return api.request(originalRequest);
+      } catch {
+        console.error(`Ошибка при обновлении токена: ${error.response}`);
 
-//             try {
-//                 const newToken = await refreshAccessToken();
-//                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
-//                 return api(originalRequest); // Повторяем оригинальный запрос
-//             } catch (refreshError) {
-//                 console.error('Ошибка обновления токена:', refreshError);
+        systemLogout();
+      }
+    }
 
-//                 const authStore = useAuthStore();
-//                 authStore.logout(); // Если обновление не удалось, тоже выполняем выход
-
-//                 return Promise.reject(refreshError);
-//             }
-//         }
-
-//         return Promise.reject(error);
-//     }
-// );
+    return Promise.reject(error);
+  },
+);

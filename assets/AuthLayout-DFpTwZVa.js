@@ -1,1 +1,0 @@
-import{_ as o,a as t,c,o as n,b as r}from"./index-BiMnbbn5.js";const s={},a={class:"container"};function _(i,u){const e=r("router-view");return n(),t("div",a,[c(e)])}const f=o(s,[["render",_]]);export{f as default};

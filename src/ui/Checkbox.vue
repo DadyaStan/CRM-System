@@ -1,16 +1,13 @@
 <script lang="ts" setup>
-import { defineProps } from 'vue';
+import { defineProps } from "vue";
 
 const props = defineProps<{
-    modelValue: boolean; 
+  modelValue: boolean;
 }>();
 </script>
 
 <template>
-    <div class="checkbox-box">
-        <input 
-            type="checkbox" 
-            :checked="props.modelValue" 
-        />
-    </div>
+  <div class="checkbox-box">
+    <input type="checkbox" :checked="props.modelValue" />
+  </div>
 </template>
