@@ -1,10 +1,8 @@
 <script lang="ts" setup>
-import { onBeforeMount, ref } from "vue";
-import { useAuthStore } from "@/store/authStore";
-
+import { onMounted, ref } from "vue";
+import { logout, fetchProfile } from "@api/authApi";
 import { Profile } from "@/types/auth";
-
-const authStore = useAuthStore();
+import router from "@/router";
 
 const userData = ref<Profile>({
   id: -1,
@@ -17,29 +15,35 @@ const userData = ref<Profile>({
 });
 
 const setUserData = async () => {
-  const profile = await authStore.fetchProfile();
+  const profile = await fetchProfile();
   userData.value = profile;
 };
 
 const handleLogout = async () => {
-  await authStore.handleLogout();
+  try {
+    await logout();
+    router.push("/CRM-System/auth/login");
+    console.log("Handle Logout");
+  } catch {
+    console.error("Ошибка при выходе из аккаунта");
+  }
 };
 
-onBeforeMount(async () => {
+onMounted(async () => {
   await setUserData();
 });
 </script>
 
 <template>
   <div class="wrapper">
-    <a-descriptions title="Профиль">
-      <a-descriptions-item label="Имя:">{{
+    <a-descriptions layout="horizontal" title="Профиль">
+      <a-descriptions-item label="Имя">{{
         userData.username
       }}</a-descriptions-item>
       <a-descriptions-item label="Мобильный номер">{{
         userData.phoneNumber ? userData.phoneNumber : "Номер не привязан"
       }}</a-descriptions-item>
-      <a-descriptions-item label="E-mail:">{{
+      <a-descriptions-item label="E-mail">{{
         userData.email
       }}</a-descriptions-item>
       <a-descriptions-item label="Роль">{{

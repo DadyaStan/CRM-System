@@ -1,19 +1,18 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-import LoginView from "@/pages/auth/LoginPage.vue";
-import SignUpView from "@/pages/auth/SignUpPage.vue";
-import Base from "@/pages/Base.vue";
-
 const routes = [
   {
     path: "/CRM-System/",
     name: "base",
-    component: Base,
+    component: () => import("@/pages/Base.vue"),
+    beforeEnter: (_to: any, _from: any, next: (arg0: string) => void) => {
+      next("/CRM-System/auth/login");
+    },
   },
   {
     path: "/CRM-System/app/",
     name: "app-layout",
-    component: () => import("@/pages/app/AppLayout.vue"),
+    component: () => import("@/components/layout/AppLayout.vue"),
     children: [
       {
         path: "todo",
@@ -35,11 +34,11 @@ const routes = [
     children: [
       {
         path: "sign-up",
-        component: SignUpView,
+        component: () => import("@/pages/auth/SignUpPage.vue"),
       },
       {
         path: "login",
-        component: LoginView,
+        component: () => import("@/pages/auth/LoginPage.vue"),
       },
     ],
     meta: {
@@ -54,7 +53,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, _from, next) => {
-  const isAuthenticated = localStorage.getItem("accessToken");
+  const isAuthenticated = localStorage.getItem("refreshToken");
 
   if (to.meta.auth && !isAuthenticated) {
     next("/CRM-System/auth/login");

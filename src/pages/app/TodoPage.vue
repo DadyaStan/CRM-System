@@ -8,9 +8,9 @@ import {
   changeTodo,
 } from "@api/todoApi";
 
-import CreateTaskForm from "@components/CreateTaskForm.vue";
-import Nav from "@components/Nav.vue";
-import TaskCard from "@components/TaskCard.vue";
+import CreateTaskForm from "@/components/todo/CreateTaskForm.vue";
+import Nav from "@/components/todo/Nav.vue";
+import TaskCard from "@/components/todo/TaskCard.vue";
 
 import {
   MetaResponse,

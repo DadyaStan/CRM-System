@@ -1,14 +1,14 @@
 <script lang="ts" setup>
 import { reactive, computed } from "vue";
 import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
-import { useAuthStore } from "@/store/authStore";
+import router from "@/router";
+
+import { signin } from "@api/authApi";
 
 interface FormState {
   login: string;
   password: string;
 }
-
-const authStore = useAuthStore();
 
 const formState = reactive<FormState>({
   login: "",
@@ -16,8 +16,16 @@ const formState = reactive<FormState>({
 });
 
 const onFinish = async (values: any) => {
-  await authStore.signin(values);
-  await authStore.fetchProfile();
+  try {
+    const token = await signin(values);
+
+    if (token) {
+      console.log(`Login 1st: ${token}`);
+      router.push("/CRM-System/app/todo");
+    }
+  } catch {
+    console.error("Ошибка авторизации");
+  }
 };
 
 const onFinishFailed = (errorInfo: any) => {

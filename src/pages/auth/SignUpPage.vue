@@ -1,124 +1,85 @@
 <script lang="ts" setup>
-import { ref, reactive } from "vue";
-import { useAuthStore } from "@/store/authStore";
-//import { UserRegistration, AuthData, RefreshToken, Profile, ProfileRequest, PasswordRequest, Token } from "../../types/auth";
+import { reactive, ref } from "vue";
+import type { Rule } from "ant-design-vue/es/form";
+import type { FormInstance } from "ant-design-vue";
+import { signup } from "@/api/authApi";
+import type { UserRegistration } from "@/types/auth";
 
-const authStore = useAuthStore();
+interface FormState {
+  username: string;
+  login: string;
+  pass: string;
+  checkPass: string;
+  email: string;
+  phone: string;
+}
 
-const formState = reactive<any>({
-  user: {
-    username: "",
-    login: "",
-    password: "",
-    confirmPassword: "",
-    email: "",
-    phone: "",
-  },
+const formRef = ref<FormInstance | any>();
+const formState = reactive<FormState>({
+  username: "",
+  login: "",
+  pass: "",
+  checkPass: "",
+  email: "",
+  phone: "",
 });
-
 const isRegisterSuccess = ref<boolean>(false);
 
-const usernameError = ref("");
-const loginError = ref("");
-const passwordError = ref("");
-const confirmPasswordError = ref("");
-const emailError = ref("");
-const phoneError = ref("");
+const handleSubmitProfile = async (values: FormState) => {
+  console.log(values, formState);
+  console.log("handle");
+  const newObj: UserRegistration = {
+    login: formState.login,
+    username: formState.username,
+    password: formState.pass,
+    email: formState.email,
+    phoneNumber: formState.phone,
+  };
 
-const validateUsername = () => {
-  usernameError.value = "";
-  const usernamePattern = /^[a-zA-Zа-яА-ЯёЁ0-9]{1,60}$/;
-
-  if (!formState.user.username) {
-    usernameError.value = "Имя пользователя является обязательным";
-  } else if (!usernamePattern.test(formState.user.username)) {
-    usernameError.value =
-      "Имя пользователя должно содержать от 1 до 60 символов (русские и латинские буквы)";
-  }
-};
-
-const validateLogin = () => {
-  loginError.value = "";
-  const loginPattern = /^[a-zA-Z]{2,60}$/;
-
-  if (!formState.user.login) {
-    loginError.value = "Логин является обязательным";
-  } else if (!loginPattern.test(formState.user.login)) {
-    loginError.value = "Логин должен содержать от 2 до 60 латинских символов";
-  }
-};
-
-const validatePassword = () => {
-  passwordError.value = "";
-
-  if (!formState.user.password) {
-    passwordError.value = "Пароль является обязательным";
-  } else if (
-    formState.user.password.length < 6 ||
-    formState.user.password.length > 60
-  ) {
-    passwordError.value = "Пароль должен содержать от 6 до 60 символов";
-  }
-};
-
-const validateConfirmPassword = () => {
-  confirmPasswordError.value = "";
-
-  if (!formState.user.confirmPassword) {
-    confirmPasswordError.value = "Повторите пароль является обязательным";
-  } else if (formState.user.confirmPassword !== formState.user.password) {
-    confirmPasswordError.value = "Пароль и его подтверждение не совпадают";
-  }
-};
-
-const validateEmail = () => {
-  emailError.value = "";
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!formState.user.email) {
-    emailError.value = "Почтовый адрес является обязательным";
-  } else if (!emailPattern.test(formState.user.email)) {
-    emailError.value = "Введите корректный почтовый адрес";
-  }
-};
-
-const validatePhone = () => {
-  phoneError.value = "";
-  const phonePattern = /^\+?[0-9\s\-()]{7,15}$/;
-
-  if (formState.user.phone && !phonePattern.test(formState.user.phone)) {
-    phoneError.value = "Введите корректный номер телефона";
-  }
-};
-
-const handleSubmit = async () => {
-  validateUsername();
-  validateLogin();
-  validatePassword();
-  validateConfirmPassword();
-  validateEmail();
-  validatePhone();
-
-  if (
-    !usernameError.value &&
-    !loginError.value &&
-    !passwordError.value &&
-    !confirmPasswordError.value &&
-    !emailError.value &&
-    !phoneError.value
-  ) {
-    const result: any = await authStore.signup(formState.user);
-
-    if (result.status === 400) {
-      alert("Ошибка десериализации запроса или неверный ввод.");
-    } else if (result.status === 409) {
-      alert("Пользователь уже существует.");
-    } else if (result.status === 500) {
-      alert("Внутренняя ошибка сервера.");
-    } else if (result.status === 201) {
-      isRegisterSuccess.value = true;
+  try {
+    await signup(newObj);
+    isRegisterSuccess.value = true;
+  } catch (error) {
+    if (error instanceof Error && error.message === "409") {
+      alert("Такой логин или почта уже существует");
+    } else {
+      alert(`Ошибка при создании профиля: ${error}`);
     }
   }
+};
+
+const validatePass = async (_rule: Rule, value: string) => {
+  if (value === "") {
+    return Promise.reject("Введите пароль");
+  } else if (value.length < 6) {
+    return Promise.reject("Пароль должен иметь больше 6 символов");
+  } else {
+    if (formState.checkPass !== "") {
+      formRef?.value.validateFields("checkPass");
+    }
+    return Promise.resolve();
+  }
+};
+
+const validatePass2 = async (_rule: Rule, value: string) => {
+  if (value === "") {
+    return Promise.reject("Введите снова пароль");
+  } else if (value.length < 6) {
+    return Promise.reject("Пароль должен иметь больше 6 символов");
+  } else if (value !== formState.pass) {
+    return Promise.reject("Пароль не совпадает");
+  } else {
+    return Promise.resolve("");
+  }
+};
+
+const layout = {
+  labelCol: { span: 11 },
+  wrapperCol: { span: 18 },
+};
+
+const handleFinishFailed = (errors: any) => {
+  console.log(errors);
 };
 </script>
 
@@ -130,98 +91,140 @@ const handleSubmit = async () => {
         Вернутся на страницу входа
       </router-link>
     </div>
-    <a-form v-else @submit.prevent="handleSubmit" layout="vertical">
-      <!-- Имя пользователя -->
+    <a-form
+      v-else
+      ref="formRef"
+      name="custom-validation"
+      :model="formState"
+      v-bind="layout"
+      @finish="handleSubmitProfile"
+      @finishFailed="handleFinishFailed"
+    >
       <a-form-item
+        has-feedback
         label="Имя пользователя"
-        :help="usernameError"
-        :validateStatus="usernameError ? 'error' : 'success'"
+        name="username"
+        :rules="[
+          {
+            required: true,
+            min: 1,
+            message: 'Введите имя пользователя',
+            trigger: 'blur',
+          },
+          {
+            max: 60,
+            message: 'Введите меньше 60 символов',
+            trigger: 'change',
+          },
+          {
+            pattern: /^[a-zA-Zа-яА-ЯёЁ0-9]{1,60}$/,
+            trigger: 'change',
+            message: 'Символы русского/латинского алфавита!',
+          },
+        ]"
       >
-        <a-input
-          v-model:value="formState.user.username"
-          @blur="validateUsername"
-          placeholder="Введите имя пользователя"
-        />
+        <a-input v-model:value="formState.username" autocomplete="off" />
       </a-form-item>
 
-      <!-- Логин -->
       <a-form-item
+        has-feedback
         label="Логин"
-        :help="loginError"
-        :validateStatus="loginError ? 'error' : 'success'"
+        name="login"
+        :rules="[
+          { required: true, message: 'Введите логин', trigger: 'blur' },
+          { min: 2, message: 'Введите больше 1 символа', trigger: 'blur' },
+          { max: 60, message: 'Введите меньше 60 символов', trigger: 'blur' },
+          {
+            pattern: /^[a-zA-Z]{2,60}$/,
+            trigger: 'blur',
+            message: 'Символы латинского алфавита!',
+          },
+        ]"
       >
-        <a-input
-          v-model:value="formState.user.login"
-          @blur="validateLogin"
-          placeholder="Введите логин"
-        />
+        <a-input v-model:value="formState.login" autocomplete="off" />
       </a-form-item>
 
-      <!-- Пароль -->
       <a-form-item
+        has-feedback
         label="Пароль"
-        :help="passwordError"
-        :validateStatus="passwordError ? 'error' : 'success'"
-      >
-        <a-input-password
-          v-model:value="formState.user.password"
-          @blur="validatePassword"
-          placeholder="Введите пароль"
-        />
-      </a-form-item>
-
-      <!-- Повторите пароль -->
-      <a-form-item
-        label="Повторите пароль"
-        :help="confirmPasswordError"
-        :validateStatus="confirmPasswordError ? 'error' : 'success'"
-      >
-        <a-input-password
-          v-model:value="formState.user.confirmPassword"
-          @blur="validateConfirmPassword"
-          placeholder="Повторите пароль"
-        />
-      </a-form-item>
-
-      <!-- Почтовый адрес -->
-      <a-form-item
-        label="Почтовый адрес"
-        :help="emailError"
-        :validateStatus="emailError ? 'error' : 'success'"
+        name="pass"
+        :rules="[
+          { required: true, min: 6, validator: validatePass, trigger: 'blur' },
+        ]"
       >
         <a-input
-          v-model:value="formState.user.email"
-          @blur="validateEmail"
-          placeholder="Введите почтовый адрес"
+          v-model:value="formState.pass"
+          type="password"
+          autocomplete="off"
         />
       </a-form-item>
 
-      <!-- Телефон -->
       <a-form-item
-        label="Телефон"
-        :help="phoneError"
-        :validateStatus="phoneError ? 'error' : 'success'"
+        has-feedback
+        name="checkPass"
+        label="Подтвердите"
+        :rules="[
+          {
+            required: true,
+            validator: validatePass2,
+            trigger: 'change',
+          },
+        ]"
       >
         <a-input
-          v-model:value="formState.user.phone"
-          @blur="validatePhone"
-          placeholder="Введите телефон"
+          v-model:value="formState.checkPass"
+          type="password"
+          autocomplete="off"
         />
       </a-form-item>
 
-      <!-- Кнопка регистрации -->
-      <a-form-item>
-        <a-button type="primary" html-type="submit"
-          >Зарегистрироваться</a-button
-        >
+      <a-form-item
+        has-feedback
+        label="Почта"
+        name="email"
+        :rules="[
+          {
+            required: true,
+            pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+            trigger: 'change',
+            message: `Введите реальную почту`,
+          },
+        ]"
+      >
+        <a-input v-model:value="formState.email" autocomplete="off" />
       </a-form-item>
 
-      <!-- Кнопка возврата к логину -->
-      <router-link to="/CRM-System/auth/login">
-        <a-form-item>
-          <a-button type="primary"><- Back to Log in</a-button>
-        </a-form-item>
-      </router-link>
+      <a-form-item
+        has-feedback
+        label="Phone"
+        name="phone"
+        :rules="[
+          {
+            required: false,
+            message: `Введите корректный номер телефона`,
+            trigger: 'change',
+            pattern: /^\+?[0-9\s\-()]{7,15}$/,
+          },
+        ]"
+      >
+        <a-input v-model:value="formState.phone" />
+      </a-form-item>
+
+      <a-form-item class="auth-page__btn-box">
+        <div>
+          <div>
+            <a-button type="primary" html-type="submit">
+              Создать аккаунт
+            </a-button>
+          </div>
+
+          <a-button style="margin: 20px auto">
+            <router-link to="/CRM-System/auth/login">
+              <p>Вернуться ко входу</p>
+            </router-link>
+          </a-button>
+        </div>
+      </a-form-item>
     </a-form>
   </div>
 </template>
@@ -238,13 +241,11 @@ const handleSubmit = async () => {
     flex-direction: column;
   }
 
-  // &__background {
-  //     width: 1110px;
-  //     height: 100vh;
-  //     background-image: url('../assets/image.png');
-  //     background-size: contain;
-  //     background-repeat: no-repeat;
-  // }
+  &__btn-box {
+    display: flex;
+    align-items: center;
+    margin-left: 150px;
+  }
 }
 
 #components-form-demo-normal-login .login-form {

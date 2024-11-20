@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [vue()],
   base: "/CRM-System/",
   build: {
-    outDir: 'docs'
+    outDir: "docs",
   },
   resolve: {
     alias: [

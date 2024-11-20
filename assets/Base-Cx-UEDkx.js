@@ -1,0 +1,1 @@
+import{_ as e,c as n,o as r,w as s,r as a,a as c}from"./index-Ci-UkiOv.js";const _={};function i(l,o){const t=a("router-link");return r(),n(t,{to:"/CRM-System/auth/login"},{default:s(()=>o[0]||(o[0]=[c("Go to Login!")])),_:1})}const u=e(_,[["render",i]]);export{u as default};

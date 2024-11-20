@@ -52,7 +52,7 @@ const handlerChangeTodoFilter = (clickedTodoFilter: todoFilter) => {
 </template>
 
 <style lang="scss">
-@import "../style.scss";
+@import "@/style.scss";
 
 .nav {
   display: flex;

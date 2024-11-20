@@ -85,7 +85,7 @@ const isTaskDone = (isDone: boolean) => {
 </template>
 
 <style lang="scss">
-@import "../style.scss";
+@import "@/style.scss";
 
 .task-card {
   width: 370px;

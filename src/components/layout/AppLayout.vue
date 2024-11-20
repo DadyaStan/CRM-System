@@ -1,10 +1,22 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { onBeforeMount, ref } from "vue";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons-vue";
+
+import { refreshToken } from "@/api/authApi";
+import tokenService from "@/services/token.service";
 
 import AppMenu from "@components/layout/AppMenu.vue";
 
 const collapsed = ref<boolean>(false);
+
+const isDataReady = ref<boolean>(false);
+
+onBeforeMount(async () => {
+  if (!tokenService.getToken() && localStorage.getItem("refreshToken")) {
+    await refreshToken();
+  }
+  isDataReady.value = true;
+});
 </script>
 
 <template>
@@ -33,7 +45,7 @@ const collapsed = ref<boolean>(false);
             backgroundColor: '#fff',
           }"
         >
-          <router-view></router-view>
+          <router-view v-if="isDataReady"></router-view>
         </a-layout-content>
       </a-layout>
     </a-layout>
