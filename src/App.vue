@@ -1,7 +1,3 @@
 <template>
-  <main class="container">
-    <router-view />
-  </main>
+  <router-view />
 </template>
-
-<style scoped></style>

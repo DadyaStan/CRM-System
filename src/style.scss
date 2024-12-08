@@ -1,16 +1,22 @@
-$main-blue: #5391FC;
-$main-red: #FC685E;
-$main-aqua: #54BBEB;
+$main-blue: #5391fc;
+$main-red: #fc685e;
+$main-aqua: #54bbeb;
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  background-color: #F1F4F9;
+  //background-color: #F1F4F9;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 a {
@@ -30,17 +36,7 @@ button {
   border: none;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+.container {
+  width: 1000px;
+  padding: 0 10px;
 }
