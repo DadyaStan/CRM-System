@@ -22,6 +22,16 @@ const routes = [
         path: "profile",
         component: () => import("@/pages/app/UserProfilePage.vue"),
       },
+      {
+        path: "users",
+        component: () => import("@/pages/app/UserListPage.vue"),
+      },
+      {
+        path: "users/:id",
+        name: "userDetails",
+        component: () => import("@/pages/app/RefactorUserProfilePage.vue"),
+        props: true,
+      },
     ],
     meta: {
       auth: true,

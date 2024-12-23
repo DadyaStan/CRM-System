@@ -45,17 +45,20 @@ export const signin = async (loginData: AuthData): Promise<string | void> => {
       alert("500 Internal Server Error: Внутренняя ошибка сервера.");
     }
 
+    console.error(`Ошибка при логине: ${error}`);
     throw new Error();
   }
 };
 export const logout = async (): Promise<void> => {
   try {
-    await api.post<void>("/user/logout");
+    if (tokenService.getToken()) {
+      await api.post<void>("/user/logout");
+    }
 
     tokenService.removeToken();
     localStorage.removeItem("refreshToken");
   } catch (error) {
-    console.error("Ошибка при логауте: " + error);
+    console.error(`Ошибка при логауте: ${error}`);
     throw new Error();
   }
 };
@@ -86,6 +89,7 @@ export const refreshToken = async (): Promise<string | void> => {
     return response.data.accessToken;
   } catch (error) {
     console.log(`Ошибка при обновлении токена: ${error}`);
+    logout();
     throw error;
   }
 };

@@ -14,7 +14,6 @@ api.interceptors.request.use(
 
     const expiresIn = tokenService.getTokenExpiration();
 
-    // Вынести в отдельную проверку которая сама будет рефрешить токен
     if (token && expiresIn < 360) {
       await refreshToken();
     }

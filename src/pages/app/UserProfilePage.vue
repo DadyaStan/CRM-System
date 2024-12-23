@@ -1,8 +1,10 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, defineEmits } from "vue";
 import { logout, fetchProfile } from "@api/authApi";
 import { Profile } from "@/types/auth";
 import router from "@/router";
+
+const emit = defineEmits();
 
 const userData = ref<Profile>({
   id: -1,
@@ -30,32 +32,33 @@ const handleLogout = async () => {
 };
 
 onMounted(async () => {
+  emit("openedPage", "profile");
   await setUserData();
 });
 </script>
 
 <template>
   <div class="wrapper">
-    <a-descriptions layout="horizontal" title="Профиль">
+    <a-descriptions bordered title="Профиль" :size="size">
+      <template #extra>
+        <a-button @click="handleLogout" type="primary">Logout</a-button>
+      </template>
       <a-descriptions-item label="Имя">{{
-        userData.username
+        userData.username ? userData.username : "-"
       }}</a-descriptions-item>
       <a-descriptions-item label="Мобильный номер">{{
         userData.phoneNumber ? userData.phoneNumber : "Номер не привязан"
       }}</a-descriptions-item>
       <a-descriptions-item label="E-mail">{{
-        userData.email
+        userData.email ? userData.email : "Почта не привязана"
       }}</a-descriptions-item>
       <a-descriptions-item label="Роль">{{
         userData.isAdmin ? "Администратор" : "Пользователь"
       }}</a-descriptions-item>
       <a-descriptions-item label="Дата регистрации:">
-        {{ userData.date }}
+        {{ userData.date ? userData.date : "-" }}
       </a-descriptions-item>
     </a-descriptions>
-    <button @click="handleLogout" style="padding: 10px; cursor: pointer">
-      Logout
-    </button>
   </div>
 </template>
 
