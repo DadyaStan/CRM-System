@@ -45,6 +45,9 @@ const handleSaveNewData = async () => {
     ) {
       isEditMode.value = false;
     } else {
+      if (editUserData.value.username === userData.value?.username) delete editUserData.value.username;
+      if (editUserData.value.email === userData.value?.email) delete editUserData.value.email;
+      if (editUserData.value.phoneNumber === userData.value?.phoneNumber) delete editUserData.value.phoneNumber;
       console.log(editUserData.value);
       const response = await changeUserData(
         Number(userData.value?.id),
@@ -55,6 +58,7 @@ const handleSaveNewData = async () => {
       isEditMode.value = false;
       message.success(`Данные успешно изменены`);
     }
+
   } catch {
     isEditMode.value = false;
     message.error(`Ошибка при изменении данных пользователя`);
@@ -64,7 +68,7 @@ const handleSaveNewData = async () => {
 
 <template>
   <div class="wrapper">
-    <a-descriptions bordered :title="`Профиль пользователя ${id}`" :size="size">
+    <a-descriptions layout="vertical" bordered :title="`Данные пользователя ${id}`" :size="size">
       <template #extra>
         <a-button v-if="!isEditMode" @click="handleOpenEditMode" type="primary"
           >Edit</a-button
@@ -77,9 +81,6 @@ const handleSaveNewData = async () => {
           >
         </div>
       </template>
-      <a-descriptions-item label="ID">
-        {{ userData?.id }}
-      </a-descriptions-item>
 
       <a-descriptions-item label="Имя пользователя">
         <a-input
@@ -103,10 +104,6 @@ const handleSaveNewData = async () => {
         </span>
       </a-descriptions-item>
 
-      <a-descriptions-item label="Дата создания аккаунта">
-        {{ userData?.date }}
-      </a-descriptions-item>
-
       <a-descriptions-item label="Контактный номер">
         <a-input
           v-if="isEditMode"
@@ -118,29 +115,6 @@ const handleSaveNewData = async () => {
             userData?.phoneNumber ? userData?.phoneNumber : "Номер не привязан"
           }}
         </span>
-      </a-descriptions-item>
-
-      <a-descriptions-item label="Статус">
-        {{ userData?.isBlocked ? "Заблокирован" : "Активен" }}
-      </a-descriptions-item>
-
-      <a-descriptions-item label="Роль пользователя">
-        {{ userData?.isAdmin ? "Администратор" : "Пользователь" }}
-      </a-descriptions-item>
-
-      <a-descriptions-item label="Config Info">
-        Data disk type: MongoDB
-        <br />
-        Database version: 3.4
-        <br />
-        Package: dds.mongo.mid
-        <br />
-        Storage space: 10 GB
-        <br />
-        Replication factor: 3
-        <br />
-        Region: East China 1
-        <br />
       </a-descriptions-item>
     </a-descriptions>
   </div>

@@ -57,11 +57,7 @@ export const changeUserData = async (
   newData: UserRequest,
 ): Promise<User | undefined> => {
   try {
-    const response = await api.put(`/admin/users/${userId}`, {
-      username: newData.username,
-      email: newData.email,
-      phoneNumber: newData.phoneNumber,
-    });
+    const response = await api.put(`/admin/users/${userId}`, {...newData});
 
     if (response) {
       return response.data;
