@@ -8,29 +8,18 @@
     @cancel="hideModal"
   >
     <p>
-      Вы уверены, что хотите {{ action }} пользователя
-      {{ props.user.username }} ?
+      Вы уверены, что хотите 
+      {{ props.text, ' ', props.user.username, '?' }}
     </p>
   </a-modal>
 </template>
 
 <script lang="ts" setup>
-import { ref, defineProps, defineEmits, onMounted } from "vue";
+import { ref, defineProps, defineEmits } from "vue";
 
-const props = defineProps(["isOpen", "action", "user"]);
+const props = defineProps(["isOpen", "action", "user", "text"]);
 const emit = defineEmits();
 const open = ref<boolean>(props.isOpen);
-const action = ref<string>("");
-
-onMounted(() => {
-  if (props.action === "delete") action.value = "удалить";
-  else if (props.action === "unblock") action.value = "разблокировать";
-  else if (props.action === "block") action.value = "заблокировать";
-  else if (props.action === "changeRights" && props.user.isAdmin)
-    action.value = "понизить в роли";
-  else if (props.action === "changeRights" && !props.user.isAdmin)
-    action.value = "повысить в роли";
-});
 
 const hideModal = () => {
   emit("closeModal");

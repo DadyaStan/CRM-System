@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from "vue";
 import { UserFilters, User } from "@/types/users";
 import { message } from "ant-design-vue";
+import { MoreOutlined, ArrowRightOutlined } from "@ant-design/icons-vue";
 
 import {
   fetchUsers,
@@ -36,7 +37,6 @@ const columns = [
     dataIndex: "isBlocked",
     key: "isBlocked",
     filters: [
-      { text: "Все", value: '' },
       { text: "Заблокированные", value: true },
       { text: "Активные", value: false },
     ],
@@ -74,8 +74,17 @@ const filterSettings = ref<UserFilters>({
   offset: undefined,
 });
 const isModalOpen = ref<boolean>(false);
-const currentUser = ref<User>();
 const modalAction = ref<string>();
+const modalText = ref<string>('')
+const currentUser = ref<User>({
+  id: -1,
+  username: '',
+  email: '',
+  date: '',
+  isBlocked: false,
+  isAdmin: false,
+  phoneNumber: '',
+});
 
 onMounted(async () => {
   try {
@@ -86,21 +95,26 @@ onMounted(async () => {
     message.error("Ошибка при загрузке пользователя");
   }
 });
-const setUpdateUser = (updateUser: any) => {
-  const index = tableData.value?.findIndex((user) => user.id === updateUser.id);
+
+const setUpdateUser = (updateUser: User) => {
+  const index = tableData.value?.findIndex((user) => user.id === updateUser?.id);
 
   if (tableData.value && index !== undefined && index !== -1) {
     tableData.value[index] = updateUser;
   }
 };
+
 const handleChangeUserRights = async () => {
   try {
     isModalOpen.value = false;
 
-    const userId = currentUser.value?.id;
-    const newData = currentUser.value?.isAdmin;
+    const userId = currentUser.value.id;
+    const newData = currentUser.value.isAdmin;
 
-    if (userId) {
+    if (!userId) {
+      message.error('Ошибка с определением пользователя');
+      return;
+    } else {
       const updateUser = await changeUserRights(userId, newData);
       setUpdateUser(updateUser);
       message.success(
@@ -111,6 +125,7 @@ const handleChangeUserRights = async () => {
     message.error(`Ошибка при изменении прав пользователя`);
   }
 };
+
 const handleBlockUser = async () => {
   try {
     isModalOpen.value = false;
@@ -125,6 +140,7 @@ const handleBlockUser = async () => {
     message.error(`Ошибка при блокировке пользователя`);
   }
 };
+
 const handleUnblockUser = async () => {
   try {
     isModalOpen.value = false;
@@ -139,6 +155,7 @@ const handleUnblockUser = async () => {
     message.error(`Ошибка при разблокировке пользователя`);
   }
 };
+
 const onTableChange = async (_pagination: any, filters: any, sorter: any) => {
   try {
     filterSettings.value = {
@@ -157,6 +174,7 @@ const onTableChange = async (_pagination: any, filters: any, sorter: any) => {
     message.error(`Ошибка при фильтрации пользователей`);
   }
 };
+
 const handleQuerySearch = async () => {
   try {
     filterSettings.value.search = searchInput.value;
@@ -168,6 +186,7 @@ const handleQuerySearch = async () => {
     message.error(`Ошибка при отправке данных на сервер`);
   }
 };
+
 const handleQueryPage = async () => {
   try {
     filterSettings.value.limit = pagination.pageSize;
@@ -180,6 +199,7 @@ const handleQueryPage = async () => {
     message.error(`Ошибка при пагинации таблицы`);
   }
 };
+
 const handleDeleteUser = async () => {
   try {
     isModalOpen.value = false;
@@ -202,9 +222,11 @@ const handleDeleteUser = async () => {
     message.error(`Ошибка при удалении пользователя`);
   }
 };
-const handleOpenConfirmModal = async (user: User, action: string) => {
+
+const handleOpenConfirmModal = async (user: User, action: string, text: string) => {
   currentUser.value = user;
   modalAction.value = action;
+  modalText.value = text;
 
   isModalOpen.value = true;
 };
@@ -213,33 +235,16 @@ const handleOpenConfirmModal = async (user: User, action: string) => {
 <template>
   <div class="users-list">
     <div>
-      <a-input-search
-        v-model:value="searchInput"
-        placeholder="Найти пользователя..."
-        enter-button
-        @search="handleQuerySearch"
-      />
+      <a-input-search v-model:value="searchInput" placeholder="Найти пользователя..." enter-button
+        @search="handleQuerySearch" />
     </div>
     <br />
     <div class="users-list__table">
-      <ActionModal
-        v-if="isModalOpen"
-        :isOpen="isModalOpen"
-        :action="modalAction"
-        :user="currentUser"
-        @delete="handleDeleteUser"
-        @block="handleBlockUser"
-        @unblock="handleUnblockUser"
-        @changeRights="handleChangeUserRights"
-        @closeModal="isModalOpen = false"
-      />
+      <ActionModal v-if="isModalOpen" :isOpen="isModalOpen" :action="modalAction" :text="modalText" :user="currentUser"
+        @delete="handleDeleteUser" @block="handleBlockUser" @unblock="handleUnblockUser"
+        @changeRights="handleChangeUserRights" @closeModal="isModalOpen = false" />
 
-      <a-table
-        :columns="columns"
-        :data-source="tableData"
-        @change="onTableChange"
-        :pagination="false"
-      >
+      <a-table :columns="columns" :data-source="tableData" @change="onTableChange" :pagination="false">
         <template #headerCell="{ column }">
           <template v-if="column.key === 'username'">
             <span> Никнейм </span>
@@ -251,9 +256,7 @@ const handleOpenConfirmModal = async (user: User, action: string) => {
 
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'username'">
-            <router-link
-              :to="{ name: 'userDetails', params: { id: record.id } }"
-            >
+            <router-link :to="{ name: 'userDetails', params: { id: record.id } }">
               {{ record.username }}
             </router-link>
           </template>
@@ -278,57 +281,42 @@ const handleOpenConfirmModal = async (user: User, action: string) => {
           </template>
           <template v-else-if="column.key === 'action'">
             <span>
-              <router-link
-                :to="{ name: 'userDetails', params: { id: record.id } }"
-              >
-                Перейти к профилю
-              </router-link>
-              <a-divider type="vertical" />
-
-              <a-button
-                @click="handleOpenConfirmModal(record, 'changeRights')"
-                style="color: black"
-              >
-                {{ record.isAdmin ? "Убрать админ." : "Сделать админ." }}
-              </a-button>
-              <a-divider type="vertical" />
-
-              <a-button
-                v-if="record.isBlocked"
-                @click="handleOpenConfirmModal(record, 'unblock')"
-                type="primary"
-              >
+              <a-button v-if="record.isBlocked" @click="handleOpenConfirmModal(record, 'unblock', 'разблокировать')">
                 {{ "Разблок." }}
               </a-button>
-              <a-button
-                v-else
-                @click="handleOpenConfirmModal(record, 'block')"
-                type="primary"
-              >
+              <a-button v-else @click="handleOpenConfirmModal(record, 'block', 'заблокировать')">
                 {{ "Блок." }}
               </a-button>
               <a-divider type="vertical" />
 
-              <a-button
-                type="primary"
-                danger
-                @click="handleOpenConfirmModal(record, 'delete')"
-              >
-                Удалить
-              </a-button>
+              <router-link :to="{ name: 'userDetails', params: { id: record.id } }">
+                <a-button>
+                  <ArrowRightOutlined />
+                </a-button>
+              </router-link>
+              <a-divider type="vertical" />
+
+              <a-popover trigger="click" placement="bottom">
+                <template #content>
+                  <a-button type="link" @click="handleOpenConfirmModal(record, 'changeRights', 'изменить роль пользователя')">
+                    {{ record.isAdmin ? "Убрать админ." : "Сделать админ." }}
+                  </a-button> 
+                  <br>
+                  <a-button type="link" danger
+                    @click="handleOpenConfirmModal(record, 'delete', 'удалить')">
+                    Удалить
+                  </a-button>
+                </template>
+                <MoreOutlined :style="{ fontSize: '18px' }" />
+              </a-popover>
             </span>
           </template>
         </template>
       </a-table>
       <div>
         <br />
-        <a-pagination
-          style="display: flex; justify-content: center"
-          v-model:current="pagination.currentPage"
-          v-model:page-size="pagination.pageSize"
-          v-model:total="pagination.totalUsers"
-          @change="handleQueryPage"
-        />
+        <a-pagination style="display: flex; justify-content: center" v-model:current="pagination.currentPage"
+          v-model:page-size="pagination.pageSize" v-model:total="pagination.totalUsers" @change="handleQueryPage" />
       </div>
     </div>
   </div>

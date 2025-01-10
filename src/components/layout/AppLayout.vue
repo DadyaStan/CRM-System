@@ -7,24 +7,30 @@ import tokenService from "@/services/token.service";
 import { useSessionStore } from "@/store/sessionStore";
 
 import AppMenu from "@components/layout/AppMenu.vue";
+import { message } from "ant-design-vue";
 
 const sessionStore = useSessionStore();
-const isDataReady = ref<boolean>(false);
+const isLoading = ref<boolean>(true);
 const route = useRoute();
 
 onBeforeMount(async () => {
-  if (!tokenService.getToken() && localStorage.getItem("refreshToken")) {
-    await refreshToken();
-  }
-  sessionStore.setUserData();
+  try {
+    if (!tokenService.getToken() && localStorage.getItem("refreshToken")) {
+      await refreshToken();
+    }
+    await sessionStore.setUserData();
 
-  isDataReady.value = true;
+    isLoading.value = false;
+  } catch {
+    message.error('Ошибка при аутентификации')
+  }
 });
 
 const breadcrumbItems = computed(() => {
   const pathArray = route.path.split("/").filter((i) => i);
+  const filteredPathArray = pathArray.slice(2);
 
-  return pathArray.map((path, index) => ({
+  return filteredPathArray.map((path, index) => ({
     name: path.charAt(0).toUpperCase() + path.slice(1),
     path: "/" + pathArray.slice(0, index + 1).join("/"),
   }));
@@ -41,18 +47,12 @@ const breadcrumbItems = computed(() => {
         </a-layout-header>
         <a-layout-content style="margin: 0 16px">
           <a-breadcrumb style="margin: 16px 0">
-            <a-breadcrumb-item
-              v-for="(item, index) in breadcrumbItems"
-              :key="index"
-              :to="item.path"
-            >
+            <a-breadcrumb-item v-for="(item, index) in breadcrumbItems" :key="index" :to="item.path">
               <router-link :to="item.path">{{ item.name }}</router-link>
             </a-breadcrumb-item>
           </a-breadcrumb>
-          <div
-            :style="{ padding: '24px', background: '#fff', minHeight: '360px' }"
-          >
-            <router-view v-if="isDataReady"></router-view>
+          <div :style="{ padding: '24px', background: '#fff', minHeight: '360px' }">
+            <router-view v-if="!isLoading"></router-view>
             <div v-else class="wrapper">
               <a-spin class="wrapper__spin" size="large" />
             </div>
@@ -84,6 +84,7 @@ const breadcrumbItems = computed(() => {
 .site-layout .site-layout-background {
   background: #fff;
 }
+
 [data-theme="dark"] .site-layout .site-layout-background {
   background: #141414;
 }

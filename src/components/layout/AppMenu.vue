@@ -14,6 +14,12 @@ const currentPath = route.path;
 const sessionStore = useSessionStore();
 const selectedKeys = ref<string[]>([currentPath]);
 const collapsed = ref<boolean>(false);
+// const menuItems = [
+//   {
+//     page: 'todo',
+//     route: '/CRM-System/app/todo',
+//   }
+// ]
 </script>
 
 <template>
