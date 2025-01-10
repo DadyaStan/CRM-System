@@ -1,1 +1,0 @@
-import{_ as o,m as t,b as r,o as c,r as n}from"./index-DstHs8pp.js";const s={},a={class:"container"};function _(i,m){const e=n("router-view");return c(),t("div",a,[r(e)])}const d=o(s,[["render",_]]);export{d as default};

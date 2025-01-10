@@ -27,13 +27,19 @@ onBeforeMount(async () => {
 });
 
 const breadcrumbItems = computed(() => {
-  const pathArray = route.path.split("/").filter((i) => i);
-  const filteredPathArray = pathArray.slice(2);
+  const pathArray = route.path.split('/').filter((i) => i);
 
-  return filteredPathArray.map((path, index) => ({
-    name: path.charAt(0).toUpperCase() + path.slice(1),
-    path: "/" + pathArray.slice(0, index + 1).join("/"),
-  }));
+  const startIndex = 2;
+  const filteredPathArray = pathArray.slice(startIndex);
+
+  return filteredPathArray.map((path, index) => {
+    const fullPath = `/${pathArray.slice(0, startIndex + index + 1).join('/')}`;
+    
+    return {
+      name: path.charAt(0).toUpperCase() + path.slice(1), 
+      path: fullPath,
+    };
+  });
 });
 </script>
 
