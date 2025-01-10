@@ -14,6 +14,7 @@ export const useSessionStore = defineStore("session", () => {
 
       if (response) {
         userData.value = response;
+        isAuthorized.value = true; 
         isCurrentUserAdmin.value = response.isAdmin;
       }
     } catch {
@@ -25,5 +26,11 @@ export const useSessionStore = defineStore("session", () => {
     return userData.value;
   };
 
-  return { isAuthorized, isCurrentUserAdmin, userData, setUserData, getUserData };
+  const deleteUserData = () => {
+    isAuthorized.value = false;
+    isCurrentUserAdmin.value = false;
+    userData.value = undefined;
+  }
+
+  return { isAuthorized, isCurrentUserAdmin, userData, setUserData, getUserData, deleteUserData };
 });

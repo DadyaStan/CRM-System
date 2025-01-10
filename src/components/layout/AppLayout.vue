@@ -3,7 +3,6 @@ import { onBeforeMount, ref, computed } from "vue";
 import { useRoute } from "vue-router";
 
 import { refreshToken } from "@/api/authApi";
-import tokenService from "@/services/token.service";
 import { useSessionStore } from "@/store/sessionStore";
 
 import AppMenu from "@components/layout/AppMenu.vue";
@@ -15,10 +14,9 @@ const route = useRoute();
 
 onBeforeMount(async () => {
   try {
-    if (!tokenService.getToken() && localStorage.getItem("refreshToken")) {
+    if (!sessionStore.isAuthorized) {
       await refreshToken();
     }
-    await sessionStore.setUserData();
 
     isLoading.value = false;
   } catch {
@@ -34,7 +32,7 @@ const breadcrumbItems = computed(() => {
 
   return filteredPathArray.map((path, index) => {
     const fullPath = `/${pathArray.slice(0, startIndex + index + 1).join('/')}`;
-    
+
     return {
       name: path.charAt(0).toUpperCase() + path.slice(1), 
       path: fullPath,

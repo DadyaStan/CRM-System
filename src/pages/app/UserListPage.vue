@@ -165,9 +165,16 @@ const onTableChange = async (_pagination: any, filters: any, sorter: any) => {
       isBlocked:
         filters.isBlocked?.length === 1 ? filters.isBlocked[0] : undefined,
       limit: pagination.pageSize ? pagination.pageSize : 10,
-      offset: pagination.currentPage ? pagination.currentPage : 1,
+      offset: pagination.currentPage,
     };
-    const response = await fetchUsers(filterSettings.value);
+    
+    let response = await fetchUsers(filterSettings.value);
+
+    if (response?.data === null && response?.meta.totalAmount > 0) {
+      pagination.currentPage = 1;
+      filterSettings.value.offset = 1;
+      response = await fetchUsers(filterSettings.value);
+    }
     tableData.value = response?.data;
     pagination.totalUsers = response?.meta.totalAmount;
   } catch {
@@ -179,7 +186,12 @@ const handleQuerySearch = async () => {
   try {
     filterSettings.value.search = searchInput.value;
 
-    const response = await fetchUsers(filterSettings.value);
+    let response = await fetchUsers(filterSettings.value);
+    if (response?.data === null && response?.meta.totalAmount > 0) {
+      pagination.currentPage = 1;
+      filterSettings.value.offset = 1;
+      response = await fetchUsers(filterSettings.value);
+    }
     tableData.value = response?.data;
     pagination.totalUsers = response?.meta.totalAmount;
   } catch {
