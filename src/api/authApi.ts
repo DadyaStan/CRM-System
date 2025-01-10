@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 import { api } from "./api";
 import tokenService from "@/services/token.service";

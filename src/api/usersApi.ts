@@ -1,4 +1,3 @@
-import { AxiosPromise } from "axios";
 import { api } from "./api";
 import {
   UserFilters,
