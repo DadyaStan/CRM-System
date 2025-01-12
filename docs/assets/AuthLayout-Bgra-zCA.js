@@ -1,1 +1,0 @@
-import{_ as o,l as t,b as r,o as c,r as n}from"./index-Czykjp-M.js";const s={},a={class:"container"};function _(i,l){const e=n("router-view");return c(),t("div",a,[r(e)])}const d=o(s,[["render",_]]);export{d as default};

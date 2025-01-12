@@ -272,6 +272,11 @@ const handleOpenConfirmModal = async (user: User, action: string, text: string) 
               {{ record.username }}
             </router-link>
           </template>
+          <template v-else-if="column.key === 'date'">
+            <span>
+              {{ record.date.slice(0, -17) }}
+            </span>
+          </template>
           <template v-else-if="column.key === 'isBlocked'">
             <span>
               {{ record.isBlocked ? "Заблокирован" : "Не заблокирован" }}

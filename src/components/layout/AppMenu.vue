@@ -44,7 +44,7 @@ const collapsed = ref<boolean>(false);
       >
         <a-menu-item key="/CRM-System/app/users">
           <unordered-list-outlined />
-          <span>Админ панель</span>
+          <span>Пользователи</span>
         </a-menu-item>
       </router-link>
     </a-menu>
