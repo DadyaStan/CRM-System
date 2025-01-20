@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, defineEmits } from "vue";
 
 import {
   fetchFilteredTodo,
@@ -20,12 +20,15 @@ import {
   todoFilter,
 } from "@/types/todo";
 
+const emit = defineEmits();
+
 const isLoading = ref<boolean>(false);
 const todoList = ref<Todo[] | undefined>([]);
 const todoInfo = ref<TodoInfo | null | undefined>(null);
 const currentFilter = ref<todoFilter>(todoFilter.all);
 
 onMounted(async () => {
+  emit("openedPage", "todo");
   await loadTodoList(todoFilter.all);
 });
 

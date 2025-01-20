@@ -14,7 +14,6 @@ api.interceptors.request.use(
 
     const expiresIn = tokenService.getTokenExpiration();
 
-    // Вынести в отдельную проверку которая сама будет рефрешить токен
     if (token && expiresIn < 360) {
       await refreshToken();
     }
@@ -36,7 +35,6 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    console.log(error.config);
 
     if (
       error.response.status === 401 &&
@@ -44,12 +42,15 @@ api.interceptors.response.use(
       !error.config._isRetry
     ) {
       originalRequest._isRetry = true;
+      console.log(error.config);
 
       try {
         if (localStorage.getItem("refreshToken")) {
           await refreshToken();
 
           return api.request(originalRequest);
+        } else {
+          logout();
         }
       } catch {
         console.error(`Ошибка при обновлении токена: ${error.response}`);

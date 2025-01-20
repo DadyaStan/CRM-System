@@ -2,6 +2,7 @@
 import { reactive, computed } from "vue";
 import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
 import router from "@/router";
+import { message } from "ant-design-vue";
 
 import { signin } from "@api/authApi";
 
@@ -24,7 +25,7 @@ const onFinish = async (values: any) => {
       router.push("/CRM-System/app/todo");
     }
   } catch {
-    console.error("Ошибка авторизации");
+    message.error("Ошибка авторизации");
   }
 };
 
