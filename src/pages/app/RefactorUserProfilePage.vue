@@ -5,6 +5,7 @@ import type { DescriptionsProps } from "ant-design-vue";
 import { User, UserRequest } from "@/types/users";
 import { fetchUserData, changeUserData } from "@/api/usersApi";
 import { message } from "ant-design-vue";
+import router from "@/router";
 
 const route = useRoute();
 
@@ -28,14 +29,14 @@ onMounted(async () => {
       userData.value = response;
     }
   } catch {
-    message.error('Ошибка при загрузке профиля пользователя')
+    router.push("/CRM-System/app/404");
   }
 });
 
 const handleOpenEditMode = () => {
   isEditMode.value = true;
 
-  editUserData.value = {...userData.value}
+  editUserData.value = { ...userData.value };
 };
 
 const handleSaveNewData = async () => {
@@ -47,9 +48,12 @@ const handleSaveNewData = async () => {
     ) {
       isEditMode.value = false;
     } else {
-      if (editUserData.value.username === userData.value?.username) delete editUserData.value.username;
-      if (editUserData.value.email === userData.value?.email) delete editUserData.value.email;
-      if (editUserData.value.phoneNumber === userData.value?.phoneNumber) delete editUserData.value.phoneNumber;
+      if (editUserData.value.username === userData.value?.username)
+        delete editUserData.value.username;
+      if (editUserData.value.email === userData.value?.email)
+        delete editUserData.value.email;
+      if (editUserData.value.phoneNumber === userData.value?.phoneNumber)
+        delete editUserData.value.phoneNumber;
       console.log(editUserData.value);
       const response = await changeUserData(
         Number(userData.value?.id),
@@ -60,7 +64,6 @@ const handleSaveNewData = async () => {
       isEditMode.value = false;
       message.success(`Данные успешно изменены`);
     }
-
   } catch {
     isEditMode.value = false;
     message.error(`Ошибка при изменении данных пользователя`);
@@ -70,32 +73,53 @@ const handleSaveNewData = async () => {
 
 <template>
   <div class="wrapper">
-    <a-descriptions layout="vertical" bordered :title="`Данные пользователя ${id}`" :size="size">
+    <a-descriptions
+      layout="vertical"
+      bordered
+      :title="`Данные пользователя ${id}`"
+      :size="size"
+    >
       <template #extra>
-        <a-button v-if="!isEditMode" @click="handleOpenEditMode" type="primary">Edit</a-button>
+        <a-button v-if="!isEditMode" @click="handleOpenEditMode" type="primary"
+          >Edit</a-button
+        >
 
         <div v-else style="display: flex; gap: 10px">
           <a-button @click="handleSaveNewData" type="primary">Save</a-button>
-          <a-button @click="isEditMode = false" type="primary" danger>Cancel</a-button>
+          <a-button @click="isEditMode = false" type="primary" danger
+            >Cancel</a-button
+          >
         </div>
       </template>
 
       <a-descriptions-item label="Имя пользователя">
-        <a-input v-if="isEditMode" v-model:value="editUserData.username" type="text" />
+        <a-input
+          v-if="isEditMode"
+          v-model:value="editUserData.username"
+          type="text"
+        />
         <span v-else>
           {{ userData?.username }}
         </span>
       </a-descriptions-item>
 
       <a-descriptions-item label="E-mail">
-        <a-input v-if="isEditMode" v-model:value="editUserData.email" type="text" />
+        <a-input
+          v-if="isEditMode"
+          v-model:value="editUserData.email"
+          type="text"
+        />
         <span v-else>
           {{ userData?.email }}
         </span>
       </a-descriptions-item>
 
       <a-descriptions-item label="Контактный номер">
-        <a-input v-if="isEditMode" v-model:value="editUserData.phoneNumber" type="text" />
+        <a-input
+          v-if="isEditMode"
+          v-model:value="editUserData.phoneNumber"
+          type="text"
+        />
         <span v-else>
           {{
             userData?.phoneNumber ? userData?.phoneNumber : "Номер не привязан"

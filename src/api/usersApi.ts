@@ -1,10 +1,5 @@
 import { api } from "./api";
-import {
-  UserFilters,
-  User,
-  MetaResponse,
-  UserRequest,
-} from "@/types/users";
+import { UserFilters, User, MetaResponse, UserRequest } from "@/types/users";
 
 export const fetchUsers = async (
   filterData?: UserFilters,
@@ -21,13 +16,10 @@ export const fetchUsers = async (
           isBlocked: filterData.isBlocked,
           limit: filterData.limit,
           offset: filterData.offset ? filterData.offset - 1 : undefined,
-        }
-      } 
+        },
+      };
     }
-    const response = await api.get<MetaResponse<User>>(
-      "/admin/users",
-      args,
-    );
+    const response = await api.get<MetaResponse<User>>("/admin/users", args);
     console.log("INPUT: ", filterData);
     console.log("OUTPUT: ", response);
 
@@ -39,7 +31,7 @@ export const fetchUsers = async (
 
 export const fetchUserData = async (
   userId: number,
-): Promise<User> => {
+): Promise<User | undefined> => {
   try {
     const response = await api.get<User>(`/admin/users/${userId}`);
 
@@ -54,7 +46,7 @@ export const changeUserData = async (
   newData: UserRequest,
 ): Promise<User> => {
   try {
-    const response = await api.put<User>(`/admin/users/${userId}`, {...newData});
+    const response = await api.put<User>(`/admin/users/${userId}`, newData);
 
     return response.data;
   } catch (error) {
@@ -69,7 +61,7 @@ export const changeUserRights = async (
   try {
     const response = await api.post<User>(`/admin/users/${userId}/rights`, {
       field: "isAdmin",
-      value: !newData,
+      value: newData,
     });
 
     console.log(response);
@@ -90,9 +82,7 @@ export const blockUser = async (userId: number): Promise<User> => {
   }
 };
 
-export const unblockUser = async (
-  userId: number,
-): Promise<User> => {
+export const unblockUser = async (userId: number): Promise<User> => {
   try {
     const response = await api.post<User>(`/admin/users/${userId}/unblock`);
 

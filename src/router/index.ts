@@ -27,6 +27,10 @@ const routes = [
         component: () => import("@/pages/app/UserListPage.vue"),
       },
       {
+        path: "404",
+        component: () => import("@/pages/app/NotFoundPage.vue"),
+      },
+      {
         path: "users/:id",
         name: "userDetails",
         component: () => import("@/pages/app/RefactorUserProfilePage.vue"),

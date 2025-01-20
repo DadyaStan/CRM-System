@@ -8,8 +8,11 @@
     @cancel="hideModal"
   >
     <p>
-      Вы уверены, что хотите 
-      {{ props.text, ' ', props.user.username, '?' }}
+      <slot>
+        Вы уверены, что хотите сделать это?
+        <br />
+        Отменить это действе будет невозможно.
+      </slot>
     </p>
   </a-modal>
 </template>
@@ -17,7 +20,7 @@
 <script lang="ts" setup>
 import { ref, defineProps, defineEmits } from "vue";
 
-const props = defineProps(["isOpen", "action", "user", "text"]);
+const props = defineProps(["isOpen"]);
 const emit = defineEmits();
 const open = ref<boolean>(props.isOpen);
 
@@ -26,7 +29,7 @@ const hideModal = () => {
 };
 
 const confirmModal = () => {
-  emit(props.action);
+  emit("confirmModal");
   open.value = false;
 };
 </script>

@@ -14,6 +14,16 @@ import {
 
 import ActionModal from "@components/userslist/ActionModal.vue";
 
+const defaultUser: User = {
+  id: -1,
+  username: "username",
+  email: "example@mail.ru",
+  date: "01-01-2000",
+  isBlocked: false,
+  isAdmin: false,
+  phoneNumber: "+7987654321",
+};
+
 const columns = [
   {
     title: "Имя пользователя",
@@ -57,7 +67,7 @@ const columns = [
     key: "action",
   },
 ];
-const tableData = ref<User[]>();
+const tableData = ref<User[]>([]);
 const searchInput = ref<string>("");
 const pagination = reactive<any>({
   currentPage: 1,
@@ -73,83 +83,63 @@ const filterSettings = ref<UserFilters>({
   limit: undefined,
   offset: undefined,
 });
-const isModalOpen = ref<boolean>(false);
-const modalAction = ref<string>();
-const modalText = ref<string>('')
-const currentUser = ref<User>({
-  id: -1,
-  username: '',
-  email: '',
-  date: '',
-  isBlocked: false,
-  isAdmin: false,
-  phoneNumber: '',
-});
+const isModalOpen = ref<string | false>(false);
+const currentUser = ref<User>(defaultUser);
 
 onMounted(async () => {
+  await fetchAndSetUsers();
+});
+
+const fetchAndSetUsers = async () => {
   try {
     const response = await fetchUsers(filterSettings.value);
-    tableData.value = response?.data;
-    pagination.totalUsers = response?.meta.totalAmount;
+
+    if (response.data) {
+      tableData.value = response.data;
+      pagination.totalUsers = response.meta.totalAmount;
+    } else {
+      tableData.value = [];
+    }
   } catch {
     message.error("Ошибка при загрузке пользователя");
   }
-});
-
-const setUpdateUser = (updateUser: User) => {
-  const index = tableData.value?.findIndex((user) => user.id === updateUser?.id);
-
-  if (tableData.value && index !== undefined && index !== -1) {
-    tableData.value[index] = updateUser;
-  }
 };
 
-const handleChangeUserRights = async () => {
+const handleChangeUserRights = async (userId: number, isAdmin: boolean) => {
   try {
     isModalOpen.value = false;
+    const newData = !isAdmin;
 
-    const userId = currentUser.value.id;
-    const newData = currentUser.value.isAdmin;
-
-    if (!userId) {
-      message.error('Ошибка с определением пользователя');
-      return;
-    } else {
-      const updateUser = await changeUserRights(userId, newData);
-      setUpdateUser(updateUser);
-      message.success(
-        `Вы успешно изменили роль пользователя ${updateUser?.username} `,
-      );
-    }
+    await changeUserRights(userId, newData);
+    await fetchAndSetUsers();
+    message.success("Роль пользователя успешно изменена");
   } catch {
     message.error(`Ошибка при изменении прав пользователя`);
   }
 };
 
-const handleBlockUser = async () => {
+const handleBlockUser = async (userId: number) => {
   try {
     isModalOpen.value = false;
 
-    const userId = currentUser.value?.id;
     if (userId) {
-      const updateUser = await blockUser(userId);
-      setUpdateUser(updateUser);
-      message.success(`Пользователь ${updateUser?.username} заблокирован`);
+      await blockUser(userId);
+      await fetchAndSetUsers();
+      message.success(`Пользователь успешно заблокирован`);
     }
   } catch {
     message.error(`Ошибка при блокировке пользователя`);
   }
 };
 
-const handleUnblockUser = async () => {
+const handleUnblockUser = async (userId: number) => {
   try {
     isModalOpen.value = false;
 
-    const userId = currentUser.value?.id;
     if (userId) {
-      const updateUser = await unblockUser(userId);
-      setUpdateUser(updateUser);
-      message.success(`Пользователь ${updateUser?.username} разблокирован`);
+      await unblockUser(userId);
+      await fetchAndSetUsers();
+      message.success(`Пользователь успешно разблокирован`);
     }
   } catch {
     message.error(`Ошибка при разблокировке пользователя`);
@@ -167,7 +157,7 @@ const onTableChange = async (_pagination: any, filters: any, sorter: any) => {
       limit: pagination.pageSize ? pagination.pageSize : 10,
       offset: pagination.currentPage,
     };
-    
+
     let response = await fetchUsers(filterSettings.value);
 
     if (response?.data === null && response?.meta.totalAmount > 0) {
@@ -212,51 +202,92 @@ const handleQueryPage = async () => {
   }
 };
 
-const handleDeleteUser = async () => {
+const handleDeleteUser = async (userId: number) => {
   try {
     isModalOpen.value = false;
 
-    const userId = currentUser.value?.id;
-
     if (userId) {
       await deleteUser(userId);
+      await fetchAndSetUsers();
 
-      const updateUser = currentUser.value;
-
-      if (updateUser) {
-        tableData.value = tableData.value?.filter(
-          (item) => item.id !== currentUser.value?.id,
-        );
-        message.success(`Пользователь ${updateUser?.username} удалён`);
-      }
+      message.success(`Пользователь успешно удалён`);
     }
   } catch {
     message.error(`Ошибка при удалении пользователя`);
   }
-};
-
-const handleOpenConfirmModal = async (user: User, action: string, text: string) => {
-  currentUser.value = user;
-  modalAction.value = action;
-  modalText.value = text;
-
-  isModalOpen.value = true;
 };
 </script>
 
 <template>
   <div class="users-list">
     <div>
-      <a-input-search v-model:value="searchInput" placeholder="Найти пользователя..." enter-button
-        @search="handleQuerySearch" />
+      <a-input-search
+        v-model:value="searchInput"
+        placeholder="Найти пользователя..."
+        enter-button
+        @search="handleQuerySearch"
+      />
     </div>
     <br />
     <div class="users-list__table">
-      <ActionModal v-if="isModalOpen" :isOpen="isModalOpen" :action="modalAction" :text="modalText" :user="currentUser"
-        @delete="handleDeleteUser" @block="handleBlockUser" @unblock="handleUnblockUser"
-        @changeRights="handleChangeUserRights" @closeModal="isModalOpen = false" />
+      <!-- <ActionModal 
+        v-if="isModalOpen" 
+        :isOpen="isModalOpen" 
+        :action="modalAction" 
+        :text="modalText"
 
-      <a-table :columns="columns" :data-source="tableData" @change="onTableChange" :pagination="false">
+        @delete="handleDeleteUser" 
+        @block="handleBlockUser" 
+        @unblock="handleUnblockUser"
+        @changeRights="handleChangeUserRights" 
+        
+        @closeModal="isModalOpen = false" 
+        @confirmModal="handleOpenConfirmModal" 
+      /> -->
+      <ActionModal
+        v-if="isModalOpen === 'unblock'"
+        :isOpen="true"
+        @closeModal="isModalOpen = false"
+        @confirmModal="handleUnblockUser(currentUser.id)"
+      >
+        Вы уверены, что хотите разблокировать пользователя
+        {{ currentUser.username }}?
+      </ActionModal>
+      <ActionModal
+        v-if="isModalOpen === 'block'"
+        :isOpen="true"
+        @closeModal="isModalOpen = false"
+        @confirmModal="handleBlockUser(currentUser.id)"
+      >
+        Вы уверены, что хотите заблокировать пользователя
+        {{ currentUser.username }}?
+      </ActionModal>
+      <ActionModal
+        v-if="isModalOpen === 'changeRights'"
+        :isOpen="true"
+        @closeModal="isModalOpen = false"
+        @confirmModal="
+          handleChangeUserRights(currentUser.id, currentUser.isAdmin)
+        "
+      >
+        Вы уверены, что хотите изменить права пользователя
+        {{ currentUser.username }}?
+      </ActionModal>
+      <ActionModal
+        v-if="isModalOpen === 'delete'"
+        :isOpen="true"
+        @closeModal="isModalOpen = false"
+        @confirmModal="handleDeleteUser(currentUser.id)"
+      >
+        Вы уверены, что хотите удалить пользователя {{ currentUser.username }}?
+      </ActionModal>
+
+      <a-table
+        :columns="columns"
+        :data-source="tableData"
+        @change="onTableChange"
+        :pagination="false"
+      >
         <template #headerCell="{ column }">
           <template v-if="column.key === 'username'">
             <span> Никнейм </span>
@@ -268,7 +299,9 @@ const handleOpenConfirmModal = async (user: User, action: string, text: string) 
 
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'username'">
-            <router-link :to="{ name: 'userDetails', params: { id: record.id } }">
+            <router-link
+              :to="{ name: 'userDetails', params: { id: record.id } }"
+            >
               {{ record.username }}
             </router-link>
           </template>
@@ -297,16 +330,32 @@ const handleOpenConfirmModal = async (user: User, action: string, text: string) 
             </span>
           </template>
           <template v-else-if="column.key === 'action'">
-            <span>
-              <a-button v-if="record.isBlocked" @click="handleOpenConfirmModal(record, 'unblock', 'разблокировать')">
-                {{ "Разблок." }}
-              </a-button>
-              <a-button v-else @click="handleOpenConfirmModal(record, 'block', 'заблокировать')">
-                {{ "Блок." }}
-              </a-button>
+            <div style="display: flex; align-items: center">
+              <div v-if="record.isBlocked">
+                <a-button
+                  @click="
+                    isModalOpen = 'unblock';
+                    currentUser = record;
+                  "
+                >
+                  {{ "Разблок." }}
+                </a-button>
+              </div>
+              <div v-else>
+                <a-button
+                  @click="
+                    isModalOpen = 'block';
+                    currentUser = record;
+                  "
+                >
+                  {{ "Блок." }}
+                </a-button>
+              </div>
               <a-divider type="vertical" />
 
-              <router-link :to="{ name: 'userDetails', params: { id: record.id } }">
+              <router-link
+                :to="{ name: 'userDetails', params: { id: record.id } }"
+              >
                 <a-button>
                   <ArrowRightOutlined />
                 </a-button>
@@ -315,25 +364,46 @@ const handleOpenConfirmModal = async (user: User, action: string, text: string) 
 
               <a-popover trigger="click" placement="bottom">
                 <template #content>
-                  <a-button type="link" @click="handleOpenConfirmModal(record, 'changeRights', 'изменить роль пользователя')">
-                    {{ record.isAdmin ? "Убрать админ." : "Сделать админ." }}
-                  </a-button> 
-                  <br>
-                  <a-button type="link" danger
-                    @click="handleOpenConfirmModal(record, 'delete', 'удалить')">
-                    Удалить
-                  </a-button>
+                  <div>
+                    <a-button
+                      type="link"
+                      @click="
+                        isModalOpen = 'changeRights';
+                        currentUser = record;
+                      "
+                    >
+                      {{ record.isAdmin ? "Убрать админ." : "Сделать админ." }}
+                    </a-button>
+                  </div>
+                  <br />
+                  <div>
+                    <a-button
+                      danger
+                      type="link"
+                      @click="
+                        isModalOpen = 'delete';
+                        currentUser = record;
+                      "
+                    >
+                      Удалить
+                    </a-button>
+                  </div>
                 </template>
                 <MoreOutlined :style="{ fontSize: '18px' }" />
               </a-popover>
-            </span>
+            </div>
           </template>
         </template>
       </a-table>
       <div>
         <br />
-        <a-pagination style="display: flex; justify-content: center" v-model:current="pagination.currentPage"
-          v-model:page-size="pagination.pageSize" v-model:total="pagination.totalUsers" @change="handleQueryPage" />
+        <a-pagination
+          style="display: flex; justify-content: center"
+          v-model:current="pagination.currentPage"
+          v-model:page-size="pagination.pageSize"
+          v-model:total="pagination.totalUsers"
+          @change="handleQueryPage"
+        />
       </div>
     </div>
   </div>

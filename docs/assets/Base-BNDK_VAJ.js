@@ -1,0 +1,1 @@
+import{_ as e,c as n,o as r,w as s,a,r as c}from"./index-CMorH2Ne.js";const _={};function i(l,o){const t=c("router-link");return r(),n(t,{to:"/CRM-System/auth/login"},{default:s(()=>o[0]||(o[0]=[a("Go to Login!")])),_:1})}const u=e(_,[["render",i]]);export{u as default};

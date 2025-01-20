@@ -25,7 +25,7 @@ const onFinish = async (values: any) => {
       router.push("/CRM-System/app/todo");
     }
   } catch {
-    message.error('Ошибка авторизации');
+    message.error("Ошибка авторизации");
   }
 };
 
